@@ -1,0 +1,15 @@
+**/__pycache__
+**/build
+config.ini
+.data
+run.sh
+*.c
+*.so
+*.log
+common
+.vscode/
+
+venv/
+lib/
+bin/
+pyvenv.cfg
