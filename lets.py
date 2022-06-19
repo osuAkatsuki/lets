@@ -5,7 +5,6 @@ import ftplib
 import os
 from multiprocessing.pool import ThreadPool
 from os import chdir, makedirs, path
-from sys import exit
 
 import redis
 import tornado.gen
@@ -74,12 +73,12 @@ def make_app():
     ], default_handler_class=defaultHandler.handler)
 
 
-if __name__ == '__main__':
+def main() -> int:
     try:
         agpl.check_license('ripple', 'LETS')
     except agpl.LicenseError as e:
         print(str(e))
-        exit(1)
+        return 1
 
     try:
         consoleHelper.printServerStartHeader(True)
@@ -94,14 +93,14 @@ if __name__ == '__main__':
             consoleHelper.printWarning()
             consoleHelper.printColored('[!] config.ini not found. A default one has been generated.', bcolors.YELLOW)
             consoleHelper.printColored('[!] Please edit your config.ini and run the server again.', bcolors.YELLOW)
-            exit()
+            return 1
 
         # If we haven't generated a default config.ini, check if it's valid
         if not glob.conf.checkConfig():
             consoleHelper.printError()
             consoleHelper.printColored('[!] Invalid config.ini. Please configure it properly', bcolors.RED)
             consoleHelper.printColored('[!] Delete your config.ini to generate a default one', bcolors.RED)
-            exit()
+            return 1
         else:
             consoleHelper.printDone()
 
@@ -197,6 +196,7 @@ if __name__ == '__main__':
         except:
             consoleHelper.printError()
             consoleHelper.printColored('[!] Error while creating threads pool. Please check your config.ini and run the server again', bcolors.RED)
+            return 1
 
         # Check osuapi
         if not generalUtils.stringToBool(glob.conf.config['osuapi']['enable']):
@@ -228,6 +228,7 @@ if __name__ == '__main__':
             serverPort = int(glob.conf.config['server']['port'])
         except:
             consoleHelper.printColored('[!] Invalid server port! Please check your config.ini and run the server again', bcolors.RED)
+            return 1
 
         # Make app
         glob.application = make_app()
@@ -241,6 +242,7 @@ if __name__ == '__main__':
                 consoleHelper.printColored('[!] Warning! Sentry logging is disabled!', bcolors.YELLOW)
         except:
             consoleHelper.printColored('[!] Error while starting Sentry client! Please check your config.ini and run the server again', bcolors.RED)
+            return 1
 
         # Set up Datadog
         try:
@@ -250,6 +252,7 @@ if __name__ == '__main__':
                 consoleHelper.printColored('[!] Warning! Datadog stats tracking is disabled!', bcolors.YELLOW)
         except:
             consoleHelper.printColored('[!] Error while starting Datadog client! Please check your config.ini and run the server again', bcolors.RED)
+            return 1
 
         # Connect to pubsub channels
         pubSub.listener(glob.redis, {
@@ -267,3 +270,8 @@ if __name__ == '__main__':
         print('> Disposing server...')
         glob.fileBuffers.flushAll()
         consoleHelper.printColored('Goodbye!', bcolors.GREEN)
+
+    return 0
+
+if __name__ == '__main__':
+    raise SystemExit(main())
